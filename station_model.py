@@ -1,57 +1,48 @@
-'''import metpy.plots as plots
-import matplotlib.pyplot as plt
-
-# Set up the plot and axis
-fig, ax = plt.subplots(figsize=(6, 6))
-ax.set_xlim(1, 10)
-ax.set_ylim(1, 10)
-
-# Create the station model plot
-stationplot = plots.StationPlot(ax, 0, 0, fontsize=14)
-
-# Add a title to the plot
-plt.title('Station Model Example')
-
-# Show the plot
-plt.show() '''
 import metpy.plots as plots
 from metpy.units import units
 import matplotlib.pyplot as plt
+import pandas as pd
 import meteostat as mt
+from datetime import datetime as dt
 
-start = datetime.datetime(2018, 1, 1)
-end = datetime.datetime(2018, 12, 31, 23, 59)
-data = Hourly('43125' ,start, end)
-data1 = Hourly('43133' ,start, end)
-data = data.fetch()
-data1 = data1.fetch()
-# Setting up the plot and axis
-fig, ax = plt.subplots(figsize=(8, 8))
-ax.set_xlim(-1.1, 1.1)
-ax.set_ylim(-1.1, 1.1)
 
-# Defining the weather variables
-temp = [72.0] * units.degF
-dewpt = [54.0] * units.degF
-wind_speed = [10.0] * units.knots
-wind_dir = [180.0] * units.degrees
-cloud_cover = [50.0] * units.percent
-present_weather = 'RA'
-pressure = 1005.0 * units.hPa
+class FetchData:
+    # __init__ takes Station ID of the required Station Model
+    def __init__(self, station_id: str , start : dt, end : dt, period:str ):
+        self.station_id = station_id
+        self.start = start
+        self.end = end
+        self.period = period
 
-# Create the station model plot
-stationplot = plots.StationPlot(ax, 0, 0, fontsize=12)
+    def fetch_station_data(self):
+        """ to get Station data
+            start = datetime(starting time period of the required data) ex. datetime(
+            end = ending time period of the required data
+            period = Frequency of the data period i.e(Hourly, Monthly, Daily)"""
+        if self.period.lower() == 'hourly':
+            if self.start > self.end:
+                print('Enter Valid hours as you provided same start date time and end date time')
+            else:
+                data = mt.Hourly(self.station_id, self.start, self.end)
+                data = data.fetch()
+                return data
+        elif self.period.lower() == 'daily':
+            if self.start > self.end or self.start == self.end:
+                print('Enter Valid days for getting Daily data')
+            else:
+                data = mt.Daily(self.station_id, self.start, self.end)
+                data = data.fetch()
+                return data
+        elif self.period.lower() == 'monthly':
+            if self.start > self.end or self.start == self.end:
+                print('Enter Valid months in Date,Time for fetching monthly data')
+            else:
+                data = mt.Monthly(self.station_id, self.start, self.end)
+                data = data.fetch()
+                return data
+        else:
+            return print('The data period frequency is not valid')
 
-# Add the weather variables to the plot
-stationplot.plot_barb(wind_dir, wind_speed)
-stationplot.plot_parameter('NW', temp)
-stationplot.plot_parameter('SW', dewpt)
-stationplot.plot_symbol(location=(-0.3, 0),codes=present_weather,symbol_mapper=5)
-stationplot.plot_symbol(cloud_cover,symbol_mapper=5)
-stationplot.plot_text((0, -0.4), f'{pressure.magnitude:.0f}', fontsize=16, ha='center')
-
-# Add a title to the plot
-plt.title('Weather Station Model')
-
-# Show the plot
-plt.show()
+class CustomData:
+    def path_to_file(self,PATH_TO_FILE):
+        self.PATH_TO_FILE = PATH_TO_FILE
