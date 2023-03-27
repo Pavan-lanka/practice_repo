@@ -7,7 +7,7 @@ from datetime import datetime as dt
 
 
 class FetchData:
-    # __init__ takes Station ID of the required Station Model
+    # __init__ takes Station ID of  the required Station Model
     def __init__(self, station_id: str , start : dt, end : dt, period:str ):
         self.station_id = station_id
         self.start = start

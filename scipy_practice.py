@@ -18,7 +18,9 @@ import metpy.plots as plots
 from metpy.units import units
 import matplotlib.pyplot as plt
 import datetime
-import meteostat as mtclass 
+import meteostat as mt
+
+
 start = datetime.datetime(2018, 1, 1)
 end = datetime.datetime(2018, 12, 31, 23, 59)
 data = mt.Hourly('43125', start, end)

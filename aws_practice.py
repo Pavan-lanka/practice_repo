@@ -4,16 +4,16 @@ import datetime
 import numpy as np
 from meteostat import Hourly
 # Set time period
-    start = datetime.datetime(2018, 1, 1)
-    end = datetime.datetime(2018, 12, 31, 23, 59)
-    data = Hourly('43125' ,start, end)
-    data1 = Hourly('43133' ,start, end)
-    data = data.fetch()
-    data1 = data1.fetch()
-    station_of_interest = data.iloc[:,0].to_frame().reset_index()
-    neigh = data1.iloc[:, 0].to_frame().reset_index()
-    station_of_interest.rename(columns={'time': 'date_time'},inplace = True)
-    neigh.rename(columns={'time': 'date_time'},inplace = True)
+start = datetime.datetime(2018, 1, 1)
+end = datetime.datetime(2018, 12, 31, 23, 59)
+data = Hourly('43125' ,start, end)
+data1 = Hourly('43133' ,start, end)
+data = data.fetch()
+data1 = data1.fetch()
+station_of_interest = data.iloc[:,0].to_frame().reset_index()
+neigh = data1.iloc[:, 0].to_frame().reset_index()
+station_of_interest.rename(columns={'time': 'date_time'},inplace = True)
+neigh.rename(columns={'time': 'date_time'},inplace = True)
 
 
 
