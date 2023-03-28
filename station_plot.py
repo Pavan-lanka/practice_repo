@@ -1,9 +1,8 @@
-import metpy.plots as mplt
+from metpy.plots import *
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import matplotlib.lines as lines
-import config
+
 
 fig, ax = plt.subplots(figsize=(10, 10))
 
@@ -23,7 +22,7 @@ cloud_height = '5'
 high_cloud = '*'
 mid_cloud = '*'
 low_cloud = '*'
-sky_cover = 'O'
+# sky_cover = 'O'
 visibility_distance = '0.5'
 present_weather = '*'
 past_weather = '*'
@@ -47,7 +46,7 @@ ax.text(-4, -4, str(dewpoint) + '°C', ha='center', va='center', fontsize=13)
 # to plot visibility distance in the model
 ax.text(-4, 0, str(visibility_distance) + 'miles', ha='center', va='center', fontsize=13)
 
-sp = mplt.StationPlot(ax, 0, 0, clip_on=True, fontsize=13)
+sp = StationPlot(ax, 0, 0, clip_on=True, fontsize=13)
 
 sp.plot_barb(u=[-wind_speed * np.sin(np.radians(wind_direction))],
              v=[-wind_speed * np.cos(np.radians(wind_direction))], length=12)
@@ -61,13 +60,13 @@ ax.text(4, 4, str(pressure) + ' hPa', ha='center', va='center', fontsize=13)
 ax.text(5, 0, str(pressure_tendency), ha='center', va='center', fontsize=13)
 
 # to add pressure_change to the model
-ax.text(3,0, str(pressure_change), ha='center', va='center', fontsize=13)
+ax.text(3, 0, str(pressure_change), ha='center', va='center', fontsize=13)
 
 # to add pressure_difference to the model
 ax.text(4, 0, str(pressure_difference), ha='center', va='center', fontsize=13)
 
 # to add sky_cover to the model
-ax.text(0, 0, str(sky_cover), ha='center', va='center', fontsize=18)
+# ax.text(0, 0, str(sky_cover), ha='center', va='center', fontsize=18)
 
 # to add sky_cover_of the lowest cloud to the model
 ax.text(0, -4, str(sky_cover_at_lowest_cloud), ha='center', va='center', fontsize=13)
@@ -79,7 +78,7 @@ ax.text(-2, -4, str(cloud_height), ha='center', va='center', fontsize=13)
 ax.text(2, -6, str(precipitation), ha='center', va='center', fontsize=13)
 
 
-sp.plot_symbol('C', symbol_mapper='50', codes= 5)
+sp.plot_symbol((0, 0), symbol_mapper=sky_cover, codes=[8])
 
 plt.grid()
 plt.show()

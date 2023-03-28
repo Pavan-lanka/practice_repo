@@ -6,4 +6,5 @@ from metpy.plots import add_metpy_logo, current_weather, sky_cover, StationPlot
 
 data = metar.parse_metar_file(get_test_data('metar_20190701_1200.txt', as_file_obj=False))
 data = data.dropna(how='any', subset=['wind_direction', 'wind_speed'])
-print(data)
+parameters = list(data.columns.values)
+print(parameters)
