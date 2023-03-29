@@ -11,12 +11,6 @@ from dataclasses import dataclass
 import metpy
 
 
-<<<<<<< HEAD
-@dataclass
-class StationModelPlot:
-    station_id: str = None
-    path_to_file: str = None
-=======
 class FetchData:
     # __init__ takes Station ID of  the required Station Model
     def __init__(self, station_id: str , start : dt, end : dt, period:str ):
@@ -24,7 +18,6 @@ class FetchData:
         self.start = start
         self.end = end
         self.period = period
->>>>>>> origin/master
 
     '''StationModelPlot Class takes Station_ID as String. ex:'12992'
     
