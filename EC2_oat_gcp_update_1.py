@@ -1,21 +1,25 @@
 import os
+import glob
 import psycopg2
 from sshtunnel import SSHTunnelForwarder
 
 SSH_HOST = '52.66.31.186'
 SSH_PORT = 22
 SSH_USER = 'ubuntu'
-SSH_KEY_PATH = '/home/pavan_azista/Documents/web_appInstance/HHCL-Ubuntu-key.pem'
+# SSH_KEY_PATH = '/home/pavan_azista/Documents/web_appInstance/HHCL-Ubuntu-key.pem'
 
-POSTGRES_HOST = 'localhost'
+SSH_KEY_PATH = os.path.expanduser('~/Documents/web_appInstance/HHCL-Ubuntu-key.pem')
+gcp_dir = os.path.expanduser('/mnt/nas_analytics/Annotation/AFR_GCP/GCP_files')
+oat_dir = os.path.expanduser('/mnt/data_products/afr/processed_data/oat')
+
+POSTGRES_HOST = '127.0.0.1'
 POSTGRES_DB = 'web_application_production'
 POSTGRES_USER = 'april'
 POSTGRES_PASSWORD = 'u&e!!!s4g3es28iTv3oqvkBod'
 POSTGRES_PORT = 5432
 
 # Directories to check
-gcp_dir = os.path.expanduser('/mnt/nas_analytics/Annotation/AFR_GCP/Gcp_Done')
-oat_dir = os.path.expanduser('/mnt/data_products/user_folders/shreyan/all_id_oat')
+# oat_dir = os.path.expanduser('/mnt/data_products/afr/processed_data/oat')
 
 table_name = 'images_data'
 id_column = 'id'
@@ -23,14 +27,45 @@ oat_flag_column = 'oat_flag'
 gcp_flag_column = 'gcp_flag'
 
 
-def check_id_in_directory(directory, ids, check_type):
+# def check_id_in_directory(directory, ids, check_type):
+#     """
+#     Check the existence of files or directories for given IDs based on the type of check.
+
+#     Args:
+#         directory (str): The base directory to check.
+#         ids (list): List of IDs to check for.
+#         check_type (str): The type of check ("oat" or "gcp").
+
+#     Returns:
+#         dict: A dictionary with IDs as keys and flag values indicating existence.
+#     """
+#     result = {}
+#     for id_ in ids:
+#         base_id = id_
+#         if '_' in id_:
+#             base_id = id_.split('_')[0]
+        
+#         if check_type == "oat":
+#             # Check for a .csv file with the ID name
+#             path = os.path.join(directory, f"{base_id}.csv")
+#             result[id_] = 1 if os.path.isfile(path) else 0
+#         elif check_type == "gcp":
+#             # Check for a directory with the ID name
+#             path = os.path.join(directory, base_id)
+#             result[id_] = 1 if os.path.exists(path) else 0
+#         else:
+#             raise ValueError("Invalid check_type. Must be 'oat' or 'gcp'.")
+        
+#         print(f"Checking {path}: {os.path.exists(path)}")
+    
+#     return result
+def check_id_in_directory(directory, ids):
     """
-    Check the existence of files or directories for given IDs based on the type of check.
+    Check for the existence of .csv files matching given IDs in the specified directory.
 
     Args:
         directory (str): The base directory to check.
         ids (list): List of IDs to check for.
-        check_type (str): The type of check ("oat" or "gcp").
 
     Returns:
         dict: A dictionary with IDs as keys and flag values indicating existence.
@@ -41,18 +76,14 @@ def check_id_in_directory(directory, ids, check_type):
         if '_' in id_:
             base_id = id_.split('_')[0]
         
-        if check_type == "oat":
-            # Check for a .csv file with the ID name
-            path = os.path.join(directory, f"{base_id}.csv")
-            result[id_] = 1 if os.path.isfile(path) else 0
-        elif check_type == "gcp":
-            # Check for a directory with the ID name
-            path = os.path.join(directory, base_id)
-            result[id_] = 1 if os.path.exists(path) else 0
-        else:
-            raise ValueError("Invalid check_type. Must be 'oat' or 'gcp'.")
+        # Use glob to match any .csv file starting with base_id
+        pattern = os.path.join(directory, f"{base_id}*.csv")
+        matching_files = glob.glob(pattern)
         
-        print(f"Checking {path}: {os.path.exists(path)}")
+        # Set result to 1 if any matching files are found, else 0
+        result[id_] = 1 if matching_files else 0
+        
+    # print(f"Checking {pattern}: {'Found' if matching_files else 'Not found'}")
     
     return result
 
@@ -67,13 +98,17 @@ def fetch_ids_from_database():
             ssh_pkey=SSH_KEY_PATH,
             remote_bind_address=(POSTGRES_HOST, POSTGRES_PORT)
         ) as tunnel:
-            # Connect to the PostgreSQL database
+            if not tunnel.is_active:
+                raise Exception("SSH tunnel could not be established.")
+
+            # Use the local bind port provided by the SSH tunnel
+            local_port = tunnel.local_bind_port            # Connect to the PostgreSQL database
             conn = psycopg2.connect(
                 database=POSTGRES_DB,
                 user=POSTGRES_USER,
                 password=POSTGRES_PASSWORD,
                 host='127.0.0.1',  # Local bind address for the SSH tunnel
-                port=5432  # Port forwarded via SSH tunnel
+                port=local_port  # Port forwarded via SSH tunnel
             )
             cursor = conn.cursor()
 
@@ -98,12 +133,17 @@ def update_database_with_flags(ids, oat_flags, gcp_flags):
             ssh_pkey=SSH_KEY_PATH,
             remote_bind_address=(POSTGRES_HOST, POSTGRES_PORT)
         ) as tunnel:
+            if not tunnel.is_active:
+                raise Exception("SSH tunnel could not be established.")
+
+            # Use the local bind port provided by the SSH tunnel
+            local_port = tunnel.local_bind_port                
             conn = psycopg2.connect(
                 database=POSTGRES_DB,
                 user=POSTGRES_USER,
                 password=POSTGRES_PASSWORD,
                 host='127.0.0.1',  # Local bind address for the SSH tunnel
-                port=5432  # Port forwarded via SSH tunnel
+                port=local_port  # Port forwarded via SSH tunnel
             )
             cursor = conn.cursor()
 
@@ -118,7 +158,7 @@ def update_database_with_flags(ids, oat_flags, gcp_flags):
             conn.commit()
             cursor.close()
             conn.close()
-            print("Database updated successfully.")
+        print("Database updated successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -132,13 +172,18 @@ def ensure_columns_exist():
             ssh_pkey=SSH_KEY_PATH,
             remote_bind_address=(POSTGRES_HOST, POSTGRES_PORT)
         ) as tunnel:
+            if not tunnel.is_active:
+                raise Exception("SSH tunnel could not be established.")
+
+            # Use the local bind port provided by the SSH tunnel
+            local_port = tunnel.local_bind_port    
             # Connect to the PostgreSQL database
             conn = psycopg2.connect(
                 database=POSTGRES_DB,
                 user=POSTGRES_USER,
                 password=POSTGRES_PASSWORD,
                 host='127.0.0.1',  # Local bind address for the SSH tunnel
-                port=5432  # Port forwarded via SSH tunnel
+                port=local_port  # Port forwarded via SSH tunnel
             )
             cursor = conn.cursor()
 
@@ -175,7 +220,7 @@ def ensure_columns_exist():
             conn.commit()
             cursor.close()
             conn.close()
-            print("Columns ensured successfully.")
+        print("Columns ensured successfully.")
     except Exception as e:
         print(f"An error occurred while ensuring columns: {e}")
 
@@ -188,8 +233,8 @@ if __name__ == "__main__":
     print(f"Fetched IDs: {ids}")
 
     # Check the directories and files for oat and gcp flags
-    oat_flags = check_id_in_directory(oat_dir, ids, 'oat')
-    gcp_flags = check_id_in_directory(gcp_dir, ids, 'gcp')
+    oat_flags = check_id_in_directory(oat_dir, ids)
+    gcp_flags = check_id_in_directory(gcp_dir, ids)
 
     # Prepare the flag lists for database update
     oat_flag_list = [oat_flags[id_] for id_ in ids]
